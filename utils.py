@@ -14,8 +14,7 @@ import matplotlib.pyplot as plt
 class ImagePaths(Dataset):
     def __init__(self, path, size=None):
         self.size = size
-
-        self.images = [os.path.join(path, file) for file in os.listdir(path)]
+        self.images =  self._get_image_paths(path)
         self._length = len(self.images)
 
         self.rescaler = albumentations.SmallestMaxSize(max_size=self.size)
@@ -24,6 +23,14 @@ class ImagePaths(Dataset):
 
     def __len__(self):
         return self._length
+
+    def _get_image_paths(self, path):
+        image_paths = []
+        for root, _, files in os.walk(path):
+            for file in files:
+                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+                    image_paths.append(os.path.join(root, file))
+        return image_paths
 
     def preprocess_image(self, image_path):
         image = Image.open(image_path)
