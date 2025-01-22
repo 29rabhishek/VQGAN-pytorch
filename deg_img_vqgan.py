@@ -59,8 +59,8 @@ def main(args):
     
     # Create output directories and files for mapping
     output_dir = "inference_results"
-    original_paths_file = os.path.join(output_dir, "original_paths.txt")
-    generated_paths_file = os.path.join(output_dir, "generated_paths.txt")
+    original_paths_file = "original_val_paths.txt"
+    generated_paths_file = "gen_val_paths.txt"
     
     os.makedirs(output_dir, exist_ok=True)
     

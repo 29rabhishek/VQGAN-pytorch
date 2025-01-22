@@ -22,7 +22,7 @@ class TrainVQGAN:
         self.prepare_training()
 
         self.train(args)
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
     def configure_optimizers(self, args):
         lr = args.learning_rate
         opt_vq = torch.optim.Adam(
