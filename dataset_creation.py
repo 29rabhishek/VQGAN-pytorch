@@ -124,12 +124,12 @@ def expand_training_data(train_csv, test_csv, additional_data_dir, new_train_csv
     print(table)
 
 # Example usage
-root_dir = "/storage/public_datasets/imagenet/ILSVRC/Data/CLS-LOC/train" 
+# root_dir = "/storage/public_datasets/imagenet/ILSVRC/Data/CLS-LOC/train" 
 train_csv = "train_data.csv"  # Output path for train CSV
 test_csv = "test_data.csv"  # Output path for test CSV
 
 # Additional data directory
-additional_data_dir = "path_to_additional_data"  # Replace with the path to additional data directory
+additional_data_dir = "/storage/public_datasets/imagenet/ILSVRC/Data/CLS-LOC/train"  # Replace with the path to additional data directory
 new_train_csv = "new_train_data.csv"  # Output path for new train CSV
 new_data_csv = "new_data.csv"  # Output path for new additional data CSV
 
