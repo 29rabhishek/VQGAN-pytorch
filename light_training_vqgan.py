@@ -161,7 +161,7 @@ if __name__ == '__main__':
         devices='auto',
         accelerator='auto',
         precision= '32',
-        strategy=DDPStrategy(find_unused_parameters=True),
+        strategy='ddp_find_unused_parameters_true',
         default_root_dir="checkpoints_vqgan",
         callbacks=[TQDMProgressBar(refresh_rate=10)],
         logger=wandb_logger
