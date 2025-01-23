@@ -156,8 +156,10 @@ if __name__ == '__main__':
 
     trainer = pl.Trainer(
         max_epochs=args.epochs,
-        devices=1,
+        devices='auto',
+        accelerator='auto',
         precision= '32',
+        strategy='auto',
         default_root_dir="checkpoints_vqgan",
         callbacks=[TQDMProgressBar(refresh_rate=10)],
         logger=wandb_logger
