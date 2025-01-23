@@ -4,3 +4,5 @@ inference_results/
 checkpoints/
 __pycache__
 vgg.pth 
+checkpoints_vqgan/
+checkpoints_old/
