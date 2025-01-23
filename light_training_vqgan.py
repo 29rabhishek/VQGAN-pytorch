@@ -55,7 +55,7 @@ class VQGANTrainer(pl.LightningModule):
         torch.autograd.set_detect_anomaly(True)
         opt_vq, opt_disc = self.optimizers()
         sched_vq, sched_disc = self.lr_schedulers()
-        imgs = batch.to(self.hparams.device)
+        imgs = batch
         decoded_images, _, q_loss = self.vqgan(imgs)
 
         # Discriminator Loss
