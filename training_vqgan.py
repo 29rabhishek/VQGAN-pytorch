@@ -16,7 +16,7 @@ class TrainVQGAN:
         self.vqgan = VQGAN(args)
         self.discriminator = Discriminator(args)
         self.perceptual_loss = LPIPS()
-
+        self.save_at_idx = 30 
         if args.device == "cuda" and torch.cuda.device_count()>1:
             self.vqgan = nn.DataParallel(self.vqgan)
             self.discriminator = nn.DataParallel(self.discriminator)
@@ -87,17 +87,20 @@ class TrainVQGAN:
                     self.opt_vq.step()
                     self.opt_disc.step()
 
-                    if i % 10 == 0:
+                    vq_loss_avg = vq_loss.mean() if torch.cuda.device_count() > 1 else vq_loss
+                    gan_loss_avg = gan_loss.mean() if torch.cuda.device_count() > 1 else gan_loss
+
+                    if i % self.save_at_idx == 0 and torch.cuda.current_device() == 0:
                         with torch.no_grad():
                             real_fake_images = torch.cat((imgs[:4], decoded_images.add(1).mul(0.5)[:4]))
                             vutils.save_image(real_fake_images, os.path.join("results", f"{epoch}_{i}.jpg"), nrow=4)
 
-                    pbar.set_postfix(
-                        VQ_Loss=np.round(vq_loss.cpu().detach().numpy().item(), 5),
-                        GAN_Loss=np.round(gan_loss.cpu().detach().numpy().item(), 3)
-                    )
-                    pbar.update(0)
-                torch.save(self.vqgan.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
+                        pbar.set_postfix(
+                            VQ_Loss=np.round(vq_loss_avg.cpu().detach().numpy().item(), 5),
+                            GAN_Loss=np.round(gan_loss_avg.cpu().detach().numpy().item(), 3)
+                        )
+                        pbar.update(0)
+                torch.save(self.vqgan.module.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
 
 
 if __name__ == '__main__':
@@ -118,9 +121,13 @@ if __name__ == '__main__':
     parser.add_argument('--disc-factor', type=float, default=1., help='')
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
-
+    parser.add_argument('--save-at-idx', type=int, default=30, help='Save images every n steps.')
+    parser.add_argument('device-ids', type=str, default="0", help='Which device the training is on')
     args = parser.parse_args()
     #args.dataset_path = r"C:\Users\dome\datasets\flowers"
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.device_ids
+    print(f"Using device: {args.device}")
+    print(f"Using devices: {args.device_ids}")
 
     train_vqgan = TrainVQGAN(args)
 
