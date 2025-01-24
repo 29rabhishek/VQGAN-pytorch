@@ -77,7 +77,7 @@ class TrainVQGAN:
                     perceptual_rec_loss = perceptual_rec_loss.mean()
                     g_loss = -torch.mean(disc_fake)
 
-                    λ = self.vqgan.calculate_lambda(perceptual_rec_loss, g_loss)
+                    λ = self.vqgan.module.calculate_lambda(perceptual_rec_loss, g_loss)
                     vq_loss = perceptual_rec_loss + q_loss + disc_factor * λ * g_loss
 
                     d_loss_real = torch.mean(F.relu(1. - disc_real))
@@ -93,8 +93,8 @@ class TrainVQGAN:
                     self.opt_vq.step()
                     self.opt_disc.step()
 
-                    vq_loss_avg = vq_loss.mean() if torch.cuda.device_count() > 1 else vq_loss
-                    gan_loss_avg = gan_loss.mean() if torch.cuda.device_count() > 1 else gan_loss
+                    # vq_loss_avg = vq_loss.mean() if torch.cuda.device_count() > 1 else vq_loss
+                    # gan_loss_avg = gan_loss.mean() if torch.cuda.device_count() > 1 else gan_loss
 
                     if i % self.save_at_idx == 0 and torch.cuda.current_device() == 0:
                         with torch.no_grad():
@@ -102,8 +102,8 @@ class TrainVQGAN:
                             vutils.save_image(real_fake_images, os.path.join("results", f"{epoch}_{i}.jpg"), nrow=4)
 
                         pbar.set_postfix(
-                            VQ_Loss=np.round(vq_loss_avg.cpu().detach().numpy().item(), 5),
-                            GAN_Loss=np.round(gan_loss_avg.cpu().detach().numpy().item(), 3)
+                            VQ_Loss=np.round(vq_loss.cpu().detach().numpy().item(), 5),
+                            GAN_Loss=np.round(gan_loss.cpu().detach().numpy().item(), 3)
                         )
                         pbar.update(0)
                 torch.save(self.vqgan.module.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
