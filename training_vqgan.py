@@ -33,18 +33,24 @@ class TrainVQGAN:
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
     def configure_optimizers(self, args):
         lr = args.learning_rate
+        # Use `.module` to access the underlying model when wrapped in DataParallel
+        model = self.vqgan.module if isinstance(self.vqgan, torch.nn.DataParallel) else self.vqgan
+
         opt_vq = torch.optim.Adam(
-            list(self.vqgan.encoder.parameters()) +
-            list(self.vqgan.decoder.parameters()) +
-            list(self.vqgan.codebook.parameters()) +
-            list(self.vqgan.quant_conv.parameters()) +
-            list(self.vqgan.post_quant_conv.parameters()),
+            list(model.encoder.parameters()) +
+            list(model.decoder.parameters()) +
+            list(model.codebook.parameters()) +
+            list(model.quant_conv.parameters()) +
+            list(model.post_quant_conv.parameters()),
             lr=lr, eps=1e-08, betas=(args.beta1, args.beta2)
         )
-        opt_disc = torch.optim.Adam(self.discriminator.parameters(),
-                                    lr=lr, eps=1e-08, betas=(args.beta1, args.beta2))
+        opt_disc = torch.optim.Adam(
+            self.discriminator.parameters(),
+            lr=lr, eps=1e-08, betas=(args.beta1, args.beta2)
+        )
 
         return opt_vq, opt_disc
+
 
     @staticmethod
     def prepare_training():
