@@ -57,6 +57,8 @@ class TrainVQGAN:
         os.makedirs("results", exist_ok=True)
         os.makedirs("checkpoints", exist_ok=True)
 
+
+
     def train(self, args):
         train_dataset = load_data(args)
         steps_per_epoch = len(train_dataset)
@@ -85,29 +87,18 @@ class TrainVQGAN:
                     gan_loss = disc_factor * 0.5*(d_loss_real + d_loss_fake)
 
                     self.opt_vq.zero_grad()
-                    vq_loss.backward(retain_graph=True)
+                    vq_loss.backward(retain_graph=True, grad_tensors=torch.ones_like(vq_loss))
 
                     self.opt_disc.zero_grad()
-                    gan_loss.backward()
+                    gan_loss.backward(grad_tensors=torch.ones_like(gan_loss))
 
                     self.opt_vq.step()
                     self.opt_disc.step()
-
-                    # vq_loss_avg = vq_loss.mean() if torch.cuda.device_count() > 1 else vq_loss
-                    # gan_loss_avg = gan_loss.mean() if torch.cuda.device_count() > 1 else gan_loss
 
                     if i % self.save_at_idx == 0 and torch.cuda.current_device() == 0:
                         with torch.no_grad():
                             real_fake_images = torch.cat((imgs[:4], decoded_images.add(1).mul(0.5)[:4]))
                             vutils.save_image(real_fake_images, os.path.join("results", f"{epoch}_{i}.jpg"), nrow=4)
-
-                        pbar.set_postfix(
-                            VQ_Loss=np.round(vq_loss.cpu().detach().numpy().item(), 5),
-                            GAN_Loss=np.round(gan_loss.cpu().detach().numpy().item(), 3)
-                        )
-                        pbar.update(0)
-                torch.save(self.vqgan.module.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="VQGAN")
