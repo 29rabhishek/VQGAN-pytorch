@@ -11,7 +11,6 @@ from lpips import LPIPS
 from vqgan import VQGAN
 from utils import load_data, weights_init
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.strategies import DDPStrategy
 
 import wandb
 
@@ -161,7 +160,7 @@ if __name__ == '__main__':
         devices='auto',
         accelerator='auto',
         precision= '32',
-        strategy='ddp_find_unused_parameters_true',
+        strategy='ddp_spawn',
         default_root_dir="checkpoints_vqgan",
         callbacks=[TQDMProgressBar(refresh_rate=10)],
         logger=wandb_logger
