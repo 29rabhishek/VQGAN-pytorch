@@ -34,23 +34,23 @@ class TrainVQGAN:
     def configure_optimizers(self, args):
         lr = args.learning_rate
         # Use `.module` to access the underlying model when wrapped in DataParallel
-        model = self.vqgan.module if isinstance(self.vqgan, torch.nn.DataParallel) else self.vqgan
+        vqgan_model= self.vqgan.module if isinstance(self.vqgan, torch.nn.DataParallel) else self.vqgan
 
         opt_vq = torch.optim.Adam(
-            list(model.encoder.parameters()) +
-            list(model.decoder.parameters()) +
-            list(model.codebook.parameters()) +
-            list(model.quant_conv.parameters()) +
-            list(model.post_quant_conv.parameters()),
+            list(vqgan_model.encoder.parameters()) +
+            list(vqgan_model.decoder.parameters()) +
+            list(vqgan_model.codebook.parameters()) +
+            list(vqgan_model.quant_conv.parameters()) +
+            list(vqgan_model.post_quant_conv.parameters()),
             lr=lr, eps=1e-08, betas=(args.beta1, args.beta2)
         )
+        disc_model= self.discriminator.module if isinstance(self.discriminator, torch.nn.DataParallel) else self.discriminator
         opt_disc = torch.optim.Adam(
-            self.discriminator.parameters(),
+            disc_model.parameters(),
             lr=lr, eps=1e-08, betas=(args.beta1, args.beta2)
         )
 
         return opt_vq, opt_disc
-
 
     @staticmethod
     def prepare_training():
@@ -69,7 +69,7 @@ class TrainVQGAN:
                     disc_real = self.discriminator(imgs)
                     disc_fake = self.discriminator(decoded_images)
 
-                    disc_factor = self.vqgan.adopt_weight(args.disc_factor, epoch*steps_per_epoch+i, threshold=args.disc_start)
+                    disc_factor = self.vqgan.module.adopt_weight(args.disc_factor, epoch*steps_per_epoch+i, threshold=args.disc_start)
 
                     perceptual_loss = self.perceptual_loss(imgs, decoded_images)
                     rec_loss = torch.abs(imgs - decoded_images)
