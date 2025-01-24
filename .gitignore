@@ -1,4 +1,5 @@
 imageNet_images/
+vqgan_eeg_imagenet_5k/
 results/
 inference_results/
 checkpoints/

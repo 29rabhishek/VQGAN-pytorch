@@ -24,12 +24,27 @@ class ImagePaths(Dataset):
     def __len__(self):
         return self._length
 
-    def _get_image_paths(self, path):
+    # def _get_image_paths(self, path):
+    #     image_paths = []
+    #     for root, _, files in os.walk(path):
+    #         for file in files:
+    #             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
+    #                 image_paths.append(os.path.join(root, file))
+    #     return image_paths
+    
+
+
+    def _get_image_paths(self, train_file):
+        # Initialize an empty list to store paths
         image_paths = []
-        for root, _, files in os.walk(path):
-            for file in files:
-                if file.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')):
-                    image_paths.append(os.path.join(root, file))
+        
+        # Read the train.txt file
+        with open(train_file, 'r') as f:
+            for line in f:
+                # Each line contains "path label", split by space
+                path, label = line.strip().split()
+                image_paths.append(path)
+        
         return image_paths
 
     def preprocess_image(self, image_path):

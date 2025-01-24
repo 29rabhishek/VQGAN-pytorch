@@ -1,137 +1,45 @@
 import os
 import random
-import csv
-from collections import defaultdict
-from prettytable import PrettyTable
+from sklearn.model_selection import train_test_split
 
-def split_data_to_csv(root_dir, train_csv, test_csv, test_size=0.2):
-    """
-    Splits image data into train and test CSV files while ensuring balanced class distribution.
+def stratified_split_image_dataset(original_dir, output_dir, test_size=0.1, random_seed=42):
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
 
-    :param root_dir: Root directory containing class subdirectories with images.
-    :param train_csv: Output CSV file path for the training data.
-    :param test_csv: Output CSV file path for the testing data.
-    :param test_size: Proportion of data to include in the test set (default is 0.2).
-    """
-    class_image_paths = defaultdict(list)
-
-    # Collect image paths for each class
-    for class_name in os.listdir(root_dir):
-        class_dir = os.path.join(root_dir, class_name)
+    # Gather all image paths and their corresponding class labels
+    image_paths = []
+    labels = []
+    class_names = sorted(os.listdir(original_dir))
+    
+    for class_name in class_names:
+        class_dir = os.path.join(original_dir, class_name)
         if os.path.isdir(class_dir):
-            for file_name in os.listdir(class_dir):
-                file_path = os.path.join(class_dir, file_name)
-                if os.path.isfile(file_path):
-                    class_image_paths[class_name].append(file_path)
+            for image_name in os.listdir(class_dir):
+                image_path = os.path.join(class_dir, image_name)
+                if os.path.isfile(image_path):
+                    image_paths.append(image_path)
+                    labels.append(class_name)
 
-    # Split data into train and test
-    train_data = []
-    test_data = []
+    # Perform stratified split
+    train_paths, test_paths, train_labels, test_labels = train_test_split(
+        image_paths, labels, test_size=test_size, stratify=labels, random_state=random_seed
+    )
 
-    for class_name, image_paths in class_image_paths.items():
-        random.shuffle(image_paths)
-        split_index = int(len(image_paths) * (1 - test_size))
-        train_data.extend([(class_name, path) for path in image_paths[:split_index]])
-        test_data.extend([(class_name, path) for path in image_paths[split_index:]])
+    # Write train.txt and test.txt
+    train_file = os.path.join(output_dir, "5k_imagenet_train.txt")
+    test_file = os.path.join(output_dir, "5k_imagenet_test.txt")
 
-    # Write train data to CSV
-    with open(train_csv, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['class_name', 'image_path'])
-        writer.writerows(train_data)
+    with open(train_file, "w") as f:
+        for path, label in zip(train_paths, train_labels):
+            f.write(f"{path} {label}\n")
 
-    # Write test data to CSV
-    with open(test_csv, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['class_name', 'image_path'])
-        writer.writerows(test_data)
+    with open(test_file, "w") as f:
+        for path, label in zip(test_paths, test_labels):
+            f.write(f"{path} {label}\n")
 
-def expand_training_data(train_csv, test_csv, additional_data_dir, new_train_csv, new_data_csv, max_new_images=100):
-    """
-    Expands the training data by adding new images from the same classes while excluding test set images.
-
-    :param train_csv: Path to the training CSV file.
-    :param test_csv: Path to the testing CSV file.
-    :param additional_data_dir: Directory containing additional images for the same classes.
-    :param new_train_csv: Output CSV file path for the new training data.
-    :param new_data_csv: Output CSV file path for the new additional data.
-    :param max_new_images: Maximum number of new images to add per class.
-    """
-    # Load existing train and test data
-    train_data = {}
-    test_data = set()
-
-    with open(train_csv, mode='r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header
-        for row in reader:
-            class_name, image_path = row
-            if class_name not in train_data:
-                train_data[class_name] = []
-            train_data[class_name].append(image_path)
-
-    with open(test_csv, mode='r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header
-        for row in reader:
-            _, image_path = row
-            test_data.add(image_path)
-
-    new_train_data = []
-    new_data = []
-    added_images_count = defaultdict(int)
-
-    # Add new images from additional data directory
-    for class_name in train_data:
-        class_dir = os.path.join(additional_data_dir, class_name)
-        if os.path.isdir(class_dir):
-            added_count = 0
-            for file_name in os.listdir(class_dir):
-                if added_count >= max_new_images:
-                    break
-                file_path = os.path.join(class_dir, file_name)
-                if os.path.isfile(file_path) and file_path not in test_data:
-                    new_train_data.append((class_name, file_path))
-                    new_data.append((class_name, file_path))
-                    added_images_count[class_name] += 1
-                    added_count += 1
-
-    # Combine existing train data with new train data
-    for class_name, paths in train_data.items():
-        for path in paths:
-            new_train_data.append((class_name, path))
-
-    # Write new train data to CSV
-    with open(new_train_csv, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['class_name', 'image_path'])
-        writer.writerows(new_train_data)
-
-    # Write new data to CSV
-    with open(new_data_csv, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['class_name', 'image_path'])
-        writer.writerows(new_data)
-
-    # Print the summary of added and old images in a table format
-    table = PrettyTable()
-    table.field_names = ["Class Name", "Old Images", "New Images"]
-    for class_name, paths in train_data.items():
-        old_count = len(paths)
-        new_count = added_images_count[class_name]
-        table.add_row([class_name, old_count, new_count])
-
-    print(table)
+    print(f"Train and test splits saved in {output_dir}.")
 
 # Example usage
-# root_dir = "/storage/public_datasets/imagenet/ILSVRC/Data/CLS-LOC/train" 
-train_csv = "train_data.csv"  # Output path for train CSV
-test_csv = "test_data.csv"  # Output path for test CSV
-
-# Additional data directory
-additional_data_dir = "/storage/public_datasets/imagenet/ILSVRC/Data/CLS-LOC/train"  # Replace with the path to additional data directory
-new_train_csv = "new_train_data.csv"  # Output path for new train CSV
-new_data_csv = "new_data.csv"  # Output path for new additional data CSV
-
-# split_data_to_csv(root_dir, train_csv, test_csv, test_size=0.2)
-expand_training_data(train_csv, test_csv, additional_data_dir, new_train_csv, new_data_csv, max_new_images=100)
+original_dir = "vqgan_eeg_imagenet_5k"  # Replace with your dataset path
+output_dir = "txt files"      # Replace with your desired output path
+stratified_split_image_dataset(original_dir, output_dir)

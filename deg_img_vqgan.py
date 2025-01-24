@@ -8,11 +8,23 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 
+def read_train_file(train_file):
+    # Initialize an empty list to store paths
+    image_paths = []
+    
+    # Read the train.txt file
+    with open(train_file, 'r') as f:
+        for line in f:
+            # Each line contains "path label", split by space
+            path, label = line.strip().split()
+            image_paths.append(path)
+    
+    return image_paths
+
+
 class ImageDataset(Dataset):
     def __init__(self, file_path, transform=None):
-        with open(file_path, 'r') as file:
-            self.image_paths = file.readlines()
-        self.image_paths = [path.strip() for path in self.image_paths]
+        self.image_paths = read_train_file(file_path)
         self.transform = transform
     
     def __len__(self):
