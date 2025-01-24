@@ -122,10 +122,10 @@ if __name__ == '__main__':
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
     parser.add_argument('--save-at-idx', type=int, default=30, help='Save images every n steps.')
-    parser.add_argument('device-ids', type=str, default="0", help='Which device the training is on')
+    # parser.add_argument('--device-ids', type=str, default="0", help='Which device the training is on')
     args = parser.parse_args()
     #args.dataset_path = r"C:\Users\dome\datasets\flowers"
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.device_ids
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args.device_ids
     print(f"Using device: {args.device}")
     print(f"Using devices: {args.device_ids}")
 
