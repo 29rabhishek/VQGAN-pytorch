@@ -127,7 +127,7 @@ if __name__ == '__main__':
     #args.dataset_path = r"C:\Users\dome\datasets\flowers"
     # os.environ["CUDA_VISIBLE_DEVICES"] = args.device_ids
     print(f"Using device: {args.device}")
-    print(f"Using devices: {args.device_ids}")
+    # print(f"Using devices: {args.device_ids}")
 
     train_vqgan = TrainVQGAN(args)
 
