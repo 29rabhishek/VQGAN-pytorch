@@ -9,14 +9,22 @@ from discriminator import Discriminator
 from lpips import LPIPS
 from vqgan import VQGAN
 from utils import load_data, weights_init
-
+from torch import nn
 
 class TrainVQGAN:
     def __init__(self, args):
-        self.vqgan = VQGAN(args).to(device=args.device)
-        self.discriminator = Discriminator(args).to(device=args.device)
+        self.vqgan = VQGAN(args)
+        self.discriminator = Discriminator(args)
+        self.perceptual_loss = LPIPS()
+
+        if args.device == "cuda" and torch.cuda.device_count()>1:
+            self.vqgan = nn.DataParallel(self.vqgan)
+            self.discriminator = nn.DataParallel(self.discriminator)
+            self.perceptual_loss = nn.DataParallel(self.perceptual_loss) 
+        self.vqgan = self.vqgan.to(device=args.device)
+        self.discriminator = self.discriminator.to(device=args.device)
         self.discriminator.apply(weights_init)
-        self.perceptual_loss = LPIPS().eval().to(device=args.device)
+        self.perceptual_loss = self.perceptual_loss.eval().to(device=args.device)
         self.opt_vq, self.opt_disc = self.configure_optimizers(args)
 
         self.prepare_training()

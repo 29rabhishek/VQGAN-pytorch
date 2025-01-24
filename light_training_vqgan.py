@@ -11,14 +11,15 @@ from lpips import LPIPS
 from vqgan import VQGAN
 from utils import load_data, weights_init
 from lightning.pytorch.loggers import WandbLogger
-
+from lightning.pytorch import loggers as pl_loggers
 import wandb
+
 
 class VQGANTrainer(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.save_hyperparameters(args)
-        wandb_logger.log_hyperparams(args)
+        # logger.log_hyperparams(args)
 
         self.vqgan = VQGAN(args)
         self.discriminator = Discriminator(args)
@@ -145,9 +146,12 @@ if __name__ == '__main__':
     parser.add_argument('--disc-factor', type=float, default=1., help='')
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
-
+    parser.add_argument('--wandb', action="store_true", help="Log to wandb")  
     args = parser.parse_args()
-    wandb_logger = WandbLogger(project="VQGAN", name="vqgan_training", log_model="all")
+    if args.wandb:
+        logger = WandbLogger(project="VQGAN", name="vqgan_training", log_model="all")
+    else:
+        logger = pl_loggers.TensorBoardLogger(save_dir="logs/")
 
     os.makedirs("results", exist_ok=True)
     os.makedirs("checkpoints_vqgan", exist_ok=True)
@@ -163,7 +167,7 @@ if __name__ == '__main__':
         strategy='ddp_spawn',
         default_root_dir="checkpoints_vqgan",
         callbacks=[TQDMProgressBar(refresh_rate=10)],
-        logger=wandb_logger
+        logger = logger
     )
 
     trainer.fit(model, dm)
