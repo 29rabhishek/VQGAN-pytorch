@@ -64,7 +64,7 @@ class ImagePaths(Dataset):
 
 def load_data(args):
     train_data = ImagePaths(args.dataset_path, size=256)
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True, prefetch_factor=2)
     return train_loader
 
 
