@@ -87,7 +87,7 @@ class TrainVQGAN:
                     gan_loss = disc_factor * 0.5*(d_loss_real + d_loss_fake)
 
                     self.opt_vq.zero_grad()
-                    vq_loss.backward(retain_graph=True)
+                    vq_loss.mean().backward(retain_graph=True)
 
                     self.opt_disc.zero_grad()
                     gan_loss.backward(grad_tensors=torch.ones_like(gan_loss))
