@@ -90,7 +90,7 @@ class TrainVQGAN:
                     vq_loss.mean().backward(retain_graph=True)
 
                     self.opt_disc.zero_grad()
-                    gan_loss.backward(grad_tensors=torch.ones_like(gan_loss))
+                    gan_loss.mean().backward()
 
                     self.opt_vq.step()
                     self.opt_disc.step()
