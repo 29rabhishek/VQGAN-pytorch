@@ -136,8 +136,8 @@ class TrainVQGAN:
 
                     # Log metrics to wandb
                     wandb.log({
-                        "vq_loss": vq_loss.item(),
-                        "gan_loss": gan_loss.item(),
+                        "vq_loss": vq_loss.item().mean(),
+                        "gan_loss": gan_loss.item().mean(),
                         "epoch": epoch,
                         "step": i,
                         "learning_rate_vq": self.opt_vq.param_groups[0]['lr'],  # Log VQGAN learning rate
