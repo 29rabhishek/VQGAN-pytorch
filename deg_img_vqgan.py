@@ -3,7 +3,7 @@ import argparse
 import torch
 from torchvision import utils as vutils
 from tqdm import tqdm
-from vqgan import VQGAN
+from models.vqgan import VQGAN
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image

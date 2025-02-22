@@ -5,10 +5,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torchvision import utils as vutils
-from discriminator import Discriminator
-from lpips import LPIPS
-from vqgan import VQGAN
-from utils import load_data, weights_init
+from utils import LPIPS, load_data, weights_init
+from models import VQGAN, Discriminator
 from torch import nn
 import wandb
 
@@ -160,9 +158,9 @@ if __name__ == '__main__':
     parser.add_argument('--num-codebook-vectors', type=int, default=1024, help='Number of codebook vectors (default: 256)')
     parser.add_argument('--beta', type=float, default=0.25, help='Commitment loss scalar (default: 0.25)')
     parser.add_argument('--image-channels', type=int, default=3, help='Number of channels of images (default: 3)')
-    parser.add_argument('--dataset-path', type=str, default='/data', help='Path to data (default: /data)')
+    parser.add_argument('--dataset-path', type=str, default='txt files/5k_imagenet_train.txt', help='Path to data (default: /data)')
     parser.add_argument('--device', type=str, default="cuda", help='Which device the training is on')
-    parser.add_argument('--batch-size', type=int, default=32, help='Input batch size for training (default: 6)')
+    parser.add_argument('--batch-size', type=int, default=6, help='Input batch size for training (default: 6)')
     parser.add_argument('--epochs', type=int, default=400, help='Number of epochs to train (default: 50)')
     parser.add_argument('--learning-rate', type=float, default=2.25e-05, help='Learning rate (default: 0.0002)')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta param (default: 0.0)')

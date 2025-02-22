@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mingpt import GPT
-from vqgan import VQGAN
+# from models import GPT
+from models import GPT2 as GPT ##GPT with cross attentation
+from models import VQGAN
 
 
 class VQGANTransformer(nn.Module):
@@ -12,6 +13,7 @@ class VQGANTransformer(nn.Module):
         self.sos_token = args.sos_token
 
         self.vqgan = self.load_vqgan(args)
+        #add logic to load the model to generate eeg embeddings
 
         transformer_config = {
             "vocab_size": args.num_codebook_vectors,
@@ -44,7 +46,7 @@ class VQGANTransformer(nn.Module):
         image = self.vqgan.decode(ix_to_vectors)
         return image
 
-    def forward(self, x):
+    def forward(self, x):# need to add code to call model to generate eeg embeddings
         _, indices = self.encode_to_z(x)
 
         sos_tokens = torch.ones(x.shape[0], 1) * self.sos_token
@@ -59,7 +61,7 @@ class VQGANTransformer(nn.Module):
 
         target = indices
 
-        logits, _ = self.transformer(new_indices[:, :-1])
+        logits, _ = self.transformer(new_indices[:, :-1])#change to include eeg embeddings
 
         return logits, target
 

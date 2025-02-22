@@ -6,9 +6,9 @@ from torch.optim.lr_scheduler import StepLR
 from torchvision import utils as vutils
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
-from discriminator import Discriminator
-from lpips import LPIPS
-from vqgan import VQGAN
+from models import Discriminator
+from utils import LPIPS
+from models.vqgan import VQGAN
 from utils import load_data, weights_init
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch import loggers as pl_loggers

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-from encoder import Encoder
-from decoder import Decoder
-from codebook import Codebook
+from layers import Encoder
+from layers import Decoder
+from layers import Codebook
 
 
 class VQGAN(nn.Module):
@@ -16,7 +16,7 @@ class VQGAN(nn.Module):
 
     def forward(self, imgs):
         encoded_images = self.encoder(imgs)
-        quant_conv_encoded_images = self.quant_conv(encoded_images)
+        quant_conv_encoded_images = self.quant_conv(encoded_images) #[256x16x16]
         codebook_mapping, codebook_indices, q_loss = self.codebook(quant_conv_encoded_images)
         post_quant_conv_mapping = self.post_quant_conv(codebook_mapping)
         decoded_images = self.decoder(post_quant_conv_mapping)
@@ -52,6 +52,7 @@ class VQGAN(nn.Module):
 
     def load_checkpoint(self, path):
         self.load_state_dict(torch.load(path))
+
 
 
 

@@ -7,3 +7,4 @@ __pycache__
 vgg.pth 
 checkpoints_vqgan/
 checkpoints_old/
+wandb/
