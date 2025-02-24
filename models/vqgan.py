@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
-from layers import Encoder
-from layers import Decoder
-from layers import Codebook
-
+from models.layers import Encoder
+from models.layers import Decoder
+from models.layers import Codebook
 
 class VQGAN(nn.Module):
     def __init__(self, args):

@@ -7,7 +7,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import utils as vutils
 from transformer import VQGANTransformer
-from utils import load_data, plot_images
+from utils import load_transformer_data, plot_images
+
+# from utils import load_data
 
 
 class TrainTransformer:
@@ -48,13 +50,14 @@ class TrainTransformer:
         return optimizer
 
     def train(self, args):
-        train_dataset = load_data(args)
+        train_dataset = load_transformer_data(args)
         for epoch in range(args.epochs):
             with tqdm(range(len(train_dataset))) as pbar:
-                for i, imgs in zip(pbar, train_dataset):#make changes to include eeg samples
+                for i, (eeg, _, imgs) in zip(pbar, train_dataset):#make changes to include eeg samples
                     self.optim.zero_grad()
                     imgs = imgs.to(device=args.device)
-                    logits, targets = self.model(imgs)#make changes to include eeg samples
+                    eeg = eeg.to(device=args.device)
+                    logits, targets = self.model(eeg, imgs)#make changes to include eeg samples
                     loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
                     loss.backward()
                     self.optim.step()

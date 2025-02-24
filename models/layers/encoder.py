@@ -1,5 +1,5 @@
 import torch.nn as nn
-from helper import ResidualBlock, NonLocalBlock, DownSampleBlock, UpSampleBlock, GroupNorm, Swish
+from .helper import ResidualBlock, NonLocalBlock, DownSampleBlock, UpSampleBlock, GroupNorm, Swish
 
 
 class Encoder(nn.Module):

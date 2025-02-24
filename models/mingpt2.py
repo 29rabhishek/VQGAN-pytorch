@@ -22,7 +22,7 @@ class CrossAttention(nn.Module):
         super().__init__()
         assert config.n_embd % config.n_head == 0
         self.key = nn.Linear(config.n_embd, config.n_embd)
-        self.query = nn.Linear(config.n_embd, config.n_embd)
+        self.query = nn.Linear(config.context_dim, config.n_embd)
         self.value = nn.Linear(config.n_embd, config.n_embd)
         self.attn_drop = nn.Dropout(config.attn_pdrop)
         self.resid_drop = nn.Dropout(config.resid_pdrop)
@@ -31,17 +31,17 @@ class CrossAttention(nn.Module):
 
     def forward(self, x, context):
         B, T, C = x.size()
-        k = self.key(x).view(B, -1, self.n_head, C // self.n_head).transpose(1, 2)
-        q = self.query(context).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)
-        v = self.value(x).view(B, -1, self.n_head, C // self.n_head).transpose(1, 2)
-
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        B, context.shape
+        k = self.key(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)#Bs, nh, T, hdim
+        q = self.query(context).view(B, -1, self.n_head, C // self.n_head).transpose(1, 2)#Bs, nh, S, hdim
+        v = self.value(x).view(B, T, self.n_head, C // self.n_head).transpose(1, 2)#Bs nh, T, hdim
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))#Bs, nh, S, T
         att = F.softmax(att, dim=-1)
         att = self.attn_drop(att)
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        y = att @ v #Bs, nh, S, hdim
+        y = y.transpose(1, 2).contiguous().view(B, -1, C) # Bs, S, nh, hdim-> Bs, S, nhxhdim
 
-        y = self.resid_drop(self.proj(y))
+        y = self.resid_drop(self.proj(y))#Bs, T, C
         return y
 
 class CausalSelfAttention(nn.Module):
@@ -76,12 +76,12 @@ class CausalSelfAttention(nn.Module):
 
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
         if layer_past is None:
-            att = att.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
+            att = att.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf')) # attention look like this [bs, nh, hdim, T, T], putting mask on in TxT metrics
 
         att = F.softmax(att, dim=-1)
         att = self.attn_drop(att)
-        y = att @ v
-        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        y = att @ v # Bs, nh, T, hdim
+        y = y.transpose(1, 2).contiguous().view(B, T, C) # Bs, T, nh, hdim-> Bs, T, nhxhdim
 
         y = self.resid_drop(self.proj(y))
         return y, present
@@ -118,12 +118,12 @@ class GPT(nn.Module):
     """ GPT with cross-attention """
 
     def __init__(self, vocab_size, block_size, n_layer=12, n_head=8, n_embd=256,
-                 embd_pdrop=0., resid_pdrop=0., attn_pdrop=0., n_unmasked=0):
+                 embd_pdrop=0., resid_pdrop=0., attn_pdrop=0., n_unmasked=0, context_dim = 1088):
         super().__init__()
         config = GPTConfig(vocab_size=vocab_size, block_size=block_size,
                            embd_pdrop=embd_pdrop, resid_pdrop=resid_pdrop, attn_pdrop=attn_pdrop,
                            n_layer=n_layer, n_head=n_head, n_embd=n_embd,
-                           n_unmasked=n_unmasked)
+                           n_unmasked=n_unmasked, context_dim = context_dim)
         self.tok_emb = nn.Embedding(config.vocab_size, config.n_embd)
         self.pos_emb = nn.Parameter(torch.zeros(1, config.block_size, config.n_embd))
         self.drop = nn.Dropout(config.embd_pdrop)
@@ -147,7 +147,7 @@ class GPT(nn.Module):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
 
-    def forward(self, idx, context=None, embeddings=None):
+    def forward(self, idx, context=None, embeddings=None):# we are here
         token_embeddings = self.tok_emb(idx)
 
         if embeddings is not None:

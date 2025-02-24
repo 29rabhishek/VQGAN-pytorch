@@ -4,7 +4,7 @@ import torch.nn.functional as F
 # from models import GPT
 from models import GPT2 as GPT ##GPT with cross attentation
 from models import VQGAN
-
+from hook_deformer_model import DLModel, load_config
 
 class VQGANTransformer(nn.Module):
     def __init__(self, args):
@@ -15,12 +15,31 @@ class VQGANTransformer(nn.Module):
         self.vqgan = self.load_vqgan(args)
         #add logic to load the model to generate eeg embeddings
 
+        ## loading eeg embedding extraction model(using hooks)
+        deformer_config = load_config("configs/config-deformer.yaml")# load eeg deformer config
+        self.eeg_model = DLModel(deformer_config)
+        # Load checkpoint using torch.load()
+        checkpoint_path = "epoch=408-step=70348.ckpt"
+        checkpoint = torch.load(checkpoint_path, map_location="cuda")
+
+        # Load only the model weights
+        self.eeg_model.net.load_state_dict(checkpoint['state_dict'], strict=False)
+        print("✅ Model checkpoint loaded successfully!")
+
+        # Move model to CUDA if available
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.eeg_model.to(device)
+
+        # Register hook manually (just in case)
+        self.eeg_model.register_latent_hook()
+
         transformer_config = {
             "vocab_size": args.num_codebook_vectors,
             "block_size": 512,
             "n_layer": 24,
             "n_head": 16,
-            "n_embd": 1024
+            "n_embd": 1024,
+            "context_dim": 1088 # cross attention query dim
         }
         self.transformer = GPT(**transformer_config)
 
@@ -45,9 +64,16 @@ class VQGANTransformer(nn.Module):
         ix_to_vectors = ix_to_vectors.permute(0, 3, 1, 2)
         image = self.vqgan.decode(ix_to_vectors)
         return image
+    
+    @torch.no_grad()
+    def get_eeg_embed(self, c):
+        _ = self.eeg_model(c)
+        return self.eeg_model.activations['latent'][0]
 
-    def forward(self, x):# need to add code to call model to generate eeg embeddings
-        _, indices = self.encode_to_z(x)
+    def forward(self, c, x):# need to add code to call model to generate eeg embeddings
+        eeg_latent_embed = self.get_eeg_embed(c) # Extracting Latent EEG embed n
+
+        _, indices = self.encode_to_z(x)#[bs, 256]
 
         sos_tokens = torch.ones(x.shape[0], 1) * self.sos_token
         sos_tokens = sos_tokens.long().to("cuda")
@@ -61,8 +87,8 @@ class VQGANTransformer(nn.Module):
 
         target = indices
 
-        logits, _ = self.transformer(new_indices[:, :-1])#change to include eeg embeddings
-
+        logits, _ = self.transformer(new_indices[:, :-1], eeg_latent_embed)#change to include eeg embeddings
+        #target shape[bs,256]
         return logits, target
 
     def top_k_logits(self, logits, k):

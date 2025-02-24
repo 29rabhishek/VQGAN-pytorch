@@ -40,7 +40,7 @@ transformer = VQGANTransformer(args).to("cuda")
 transformer.load_state_dict(torch.load(os.path.join("checkpoints", "transformer_last_ckpt.pt")))
 print("Loaded state dict of Transformer")
 
-for i in tqdm(range(n)):
+for i in tqdm(range(n)): # modify code to include eeg sampleing or load dataset
     start_indices = torch.zeros((4, 0)).long().to("cuda")
     sos_tokens = torch.ones(start_indices.shape[0], 1) * 0
     sos_tokens = sos_tokens.long().to("cuda")

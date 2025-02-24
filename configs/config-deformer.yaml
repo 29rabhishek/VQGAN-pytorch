@@ -1,0 +1,23 @@
+model: Deformer
+num_class: 40
+num_chan: 128
+num_time: 440
+kernel_length: 31
+T: 64
+AT: 32
+num_layers: 6
+dropout: 0.25
+
+# Training Parameters
+random_seed: 2025
+max_epoch: 400
+batch_size: 64
+lr: 0.001
+
+# Optimizer Settings
+weight_decay: 1e-5
+
+# Scheduler Settings
+scheduler:
+  type: CosineAnnealingLR
+  eta_min: 1e-6
