@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     # args.dataset_path = r"txt files/5k_imagenet_train.txt"
-    args.checkpoint_path = r"checkpoints/vqgan_checkpoint.pth"
+    args.checkpoint_path = r"checkpoints/vqgan_epoch_366.pt"
 
     train_transformer = TrainTransformer(args)
 
