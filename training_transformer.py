@@ -17,7 +17,7 @@ class TrainTransformer:
 
         # Set device and initialize model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-        model = VQGANTransformer(args)
+        self.model = VQGANTransformer(args)
 
          #Optimizer, AMP scaler, and scheduler
         self.optim = self.configure_optimizers(args)
@@ -27,9 +27,9 @@ class TrainTransformer:
         # Wrap model in DataParallel if multiple GPUs are available
         if torch.cuda.device_count() > 1:
             print(f"Using {torch.cuda.device_count()} GPUs for training.")
-            self.model = nn.DataParallel(model).to(self.device)
+            self.model = nn.DataParallel(self.model).to(self.device)
         else:
-            self.model = model.to(self.device)
+            self.model = self.model.to(self.device)
 
 
 
