@@ -61,7 +61,7 @@ class VQGAN(nn.Module):
 
         # Check if the model was saved with DataParallel (module. prefix)
         new_state_dict = OrderedDict()
-        for k, v in state_dict.items():
+        for k, v in state_dict["vqgan_state_dict"].items():
             # Remove 'module.' prefix if it exists
             new_key = k.replace("module.", "") if k.startswith("module.") else k
             new_state_dict[new_key] = v
