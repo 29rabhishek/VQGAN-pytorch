@@ -28,7 +28,7 @@ class TrainTransformer:
 
         # Optimizer, AMP scaler, and scheduler
         self.optim = self.configure_optimizers(args)
-        self.scaler = GradScaler()
+        self.scaler = torch.amp.GradScaler("cuda")
         self.scheduler = self.configure_scheduler(args)
 
         # Start training
@@ -48,6 +48,7 @@ class TrainTransformer:
                     no_decay.add(fpn)
                 elif pn.endswith("weight") and isinstance(m, whitelist_weight_modules):
                     decay.add(fpn)
+
                 elif pn.endswith("weight") and isinstance(m, blacklist_weight_modules):
                     no_decay.add(fpn)
 
@@ -64,8 +65,8 @@ class TrainTransformer:
 
     def configure_scheduler(self, args):
         """Configures the learning rate scheduler."""
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            self.optim, step_size=10, gamma=0.5
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optim, patience=10, threshold=.0001
         )
         return scheduler
 
@@ -107,11 +108,11 @@ class TrainTransformer:
                     })
 
             # Scheduler step after each epoch
-            self.scheduler.step()
+            avg_loss = total_loss / len(train_dataset)
+            self.scheduler.step(avg_loss)
 
             # Average epoch loss
             if torch.cuda.current_device() == 0:
-                avg_loss = total_loss / len(train_dataset)
                 print(f"\nEpoch [{epoch+1}/{args.epochs}] - Avg Loss: {avg_loss:.4f}, LR: {self.optim.param_groups[0]['lr']:.6f}")
                 wandb.log({"epoch/avg_loss": avg_loss, "epoch/lr": self.optim.param_groups[0]['lr'], "epoch": epoch+1})
 
