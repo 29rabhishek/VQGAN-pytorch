@@ -89,7 +89,7 @@ class TrainTransformer:
                     eeg = eeg.to(self.device)
 
                     # Forward pass with AMP
-                    with torch.amp.autocast():
+                    with torch.amp.autocast(device_type='cuda'):
                         logits, targets = self.model(eeg, imgs)
                         loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
 
