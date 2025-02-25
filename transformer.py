@@ -48,6 +48,7 @@ class VQGANTransformer(nn.Module):
     @staticmethod
     def load_vqgan(args):
         model = VQGAN(args)
+        
         model.load_checkpoint(args.checkpoint_path)
         model = model.eval()
         return model
@@ -98,13 +99,14 @@ class VQGANTransformer(nn.Module):
         return out
 
     @torch.no_grad()
-    def sample(self, x, c, steps, temperature=1.0, top_k=100):
+    def sample(self, x, c, eeg, steps, temperature=1.0, top_k=100):
         self.transformer.eval()
+        eeg_latent_embed = self.get_eeg_embed(eeg)
         x = torch.cat((c, x), dim=1)
         for k in range(steps):
-            logits, _ = self.transformer(x)
+            logits, _ = self.transformer(x, eeg_latent_embed)
             logits = logits[:, -1, :] / temperature
-
+#n13054560
             if top_k is not None:
                 logits = self.top_k_logits(logits, top_k)
 
@@ -119,7 +121,7 @@ class VQGANTransformer(nn.Module):
         return x
 
     @torch.no_grad()
-    def log_images(self, x):
+    def log_images(self, x, eeg):
         log = dict()
 
         _, indices = self.encode_to_z(x)
@@ -127,11 +129,11 @@ class VQGANTransformer(nn.Module):
         sos_tokens = sos_tokens.long().to("cuda")
 
         start_indices = indices[:, :indices.shape[1] // 2]
-        sample_indices = self.sample(start_indices, sos_tokens, steps=indices.shape[1] - start_indices.shape[1])
+        sample_indices = self.sample(start_indices, sos_tokens, eeg, steps=indices.shape[1] - start_indices.shape[1])
         half_sample = self.z_to_image(sample_indices)
 
         start_indices = indices[:, :0]
-        sample_indices = self.sample(start_indices, sos_tokens, steps=indices.shape[1])
+        sample_indices = self.sample(start_indices, sos_tokens, eeg, steps=indices.shape[1])
         full_sample = self.z_to_image(sample_indices)
 
         x_rec = self.z_to_image(indices)

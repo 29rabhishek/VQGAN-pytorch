@@ -3,6 +3,7 @@ import torch.nn as nn
 from models.layers import Encoder
 from models.layers import Decoder
 from models.layers import Codebook
+from collections import OrderedDict
 
 class VQGAN(nn.Module):
     def __init__(self, args):
@@ -49,8 +50,27 @@ class VQGAN(nn.Module):
             disc_factor = value
         return disc_factor
 
+    # def load_checkpoint(self, path):
+    #     self.load_state_dict(torch.load(path))
+
+
+
     def load_checkpoint(self, path):
-        self.load_state_dict(torch.load(path))
+        # Load the state_dict from the checkpoint
+        state_dict = torch.load(path)
+
+        # Check if the model was saved with DataParallel (module. prefix)
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            # Remove 'module.' prefix if it exists
+            new_key = k.replace("module.", "") if k.startswith("module.") else k
+            new_state_dict[new_key] = v
+
+        # Load the cleaned state_dict into the model
+        self.load_state_dict(new_state_dict)
+
+        print(f"Checkpoint loaded successfully from {path}.")
+
 
 
 
