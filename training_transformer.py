@@ -93,8 +93,8 @@ if __name__ == '__main__':
     parser.add_argument('--sos-token', type=int, default=0, help='Start of Sentence token.')
 
     args = parser.parse_args()
-    args.dataset_path = r"txt files/5k_imagenet_train.txt"
-    args.checkpoint_path = r"checkpoints/vqgan_epoch_366.pt"
+    # args.dataset_path = r"txt files/5k_imagenet_train.txt"
+    args.checkpoint_path = r"checkpoints/vqgan_checkpoint.pth"
 
     train_transformer = TrainTransformer(args)
 
