@@ -94,7 +94,7 @@ class EEGImageDataset(Dataset):
             img = self.preprocess_image(self.images.loc[idx, "image_paths"])
         except:
             print(self.images.loc[idx, "image_paths"])
-            return self.__getitem__(idx%self.__len__())
+            return self.__getitem__(idx+1%self.__len__())
         return eeg, label, img
 
 
