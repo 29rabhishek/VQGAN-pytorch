@@ -54,7 +54,7 @@ class TrainTransformer:
                 elif pn.endswith("weight") and isinstance(m, blacklist_weight_modules):
                     no_decay.add(fpn)
 
-        no_decay.add("pos_emb")
+        #no_decay.add("pos_emb")
         param_dict = {pn: p for pn, p in self.model.named_parameters()}
 
         optim_groups = [
