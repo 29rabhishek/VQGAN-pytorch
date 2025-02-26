@@ -12,9 +12,8 @@ from utils import load_transformer_data, plot_images
 import wandb
 
 class TrainTransformer:
-    def __init__(self, args):
-        wandb.init(project="VQGAN-Training", name="transformer-training-experiment-25th-Feb")
-
+    def __init__(self, args, run):
+        self.run = run # wnadb
         # Set device and initialize model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
         self.model = VQGANTransformer(args)
@@ -116,13 +115,13 @@ class TrainTransformer:
             # Average epoch loss
             if torch.cuda.current_device() == 0:
                 print(f"\nEpoch [{epoch+1}/{args.epochs}] - Avg Loss: {avg_loss:.4f}, LR: {self.optim.param_groups[0]['lr']:.6f}")
-                wandb.log({"epoch/avg_loss": avg_loss, "epoch/lr": self.optim.param_groups[0]['lr'], "epoch": epoch+1})
+                self.run.log({"epoch/avg_loss": avg_loss, "epoch/lr": self.optim.param_groups[0]['lr'], "epoch": epoch+1})
 
                 # Log images
                 log, sampled_imgs = self.model.module.log_images(imgs[0][None], eeg[0][None])
                 image_path = os.path.join("results", f"transformer_epoch_{epoch+1}.jpg")
                 vutils.save_image(sampled_imgs, image_path, nrow=4)
-                wandb.log({"epoch/reconstructed_images": [wandb.Image(sampled_imgs, caption=f"Epoch {epoch+1}")]})
+                self.run.log({"epoch/reconstructed_images": [wandb.Image(sampled_imgs, caption=f"Epoch {epoch+1}")]})
                 plot_images(log)
 
             # Save checkpoint (remove DataParallel wrapper)
@@ -145,7 +144,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset-path', type=str, default='./data', help='Path to dataset.')
     parser.add_argument('--checkpoint-path', type=str, default='./checkpoints/vqgan_checkpoint.pth', help='Checkpoint path.')
     parser.add_argument('--device', type=str, default="cuda", help='Device to use for training.')
-    parser.add_argument('--batch-size', type=int, default=6, help='Batch size.')
+    parser.add_argument('--batch-size', type=int, default=32, help='Batch size.')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs.')
     parser.add_argument('--learning-rate', type=float, default=2.25e-5, help='Learning rate.')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta1.')
@@ -159,5 +158,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # stting up wandb
+    run = wandb.init(project="VQGAN-Training", name="transformer-training-experiment-25th-Feb")
     # Train the transformer
-    train_transformer = TrainTransformer(args)
+    try:
+        train_transformer = TrainTransformer(args, run)
+    except Exception as e:
+        wandb.log({"error_msg"})
