@@ -29,7 +29,7 @@ def load_deformer():
 
     for param in deformer.parameters():
         param.requires_grad = False
-    print(f"EEG Embedding Model Parameters require grad set FALSE 😎")
+    print(f"EEG Embedding Model Parameters require grad set FALSE 🧊")
     return deformer
 
 def load_vqgan(args):
@@ -39,7 +39,7 @@ def load_vqgan(args):
     print("✅ VQGAN Model checkpoint loaded successfully!")
     for param in vqgan.parameters():
         param.requires_grad = False
-    print(f"VQGAN Parameters require grad set FALSE 😎")
+    print(f"VQGAN Parameters require grad set FALSE 🧊")
     return vqgan
 class TrainTransformer:
     def __init__(self, args, run):
@@ -54,7 +54,7 @@ class TrainTransformer:
         #Loading VQGAN
         self.vqgan = load_vqgan(args)
 
-        self.self.vqgan.eval()
+        self.vqgan.eval()
 
         self.model = VQGANTransformer(args, self.deformer, self.vqgan)
 
