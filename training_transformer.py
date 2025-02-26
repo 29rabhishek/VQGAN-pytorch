@@ -13,31 +13,50 @@ from models import VQGAN
 
 import wandb
 
+
+def load_deformer():
+    ## loading eeg embedding extraction model(using hooks)
+    deformer_config = load_config("configs/config-deformer.yaml")# load eeg deformer config
+    deformer = DLModel(deformer_config)
+    
+    # Load checkpoint using torch.load()
+    checkpoint_path = "epoch=408-step=70348.ckpt"
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+
+    # Load only the model weights
+    deformer.net.load_state_dict(checkpoint['state_dict'], strict=False)
+    print("✅ EEG Embedding Model checkpoint loaded successfully!")
+
+    for param in deformer.parameters():
+        param.requires_grad = False
+    print(f"EEG Embedding Model Parameters require grad set FALSE 😎")
+    return deformer
+
+def load_vqgan(args):
+    vqgan = VQGAN(args)
+    vqgan.load_checkpoint(args.checkpoint_path)
+
+    print("✅ VQGAN Model checkpoint loaded successfully!")
+    for param in vqgan.parameters():
+        param.requires_grad = False
+    print(f"VQGAN Parameters require grad set FALSE 😎")
+    return vqgan
 class TrainTransformer:
     def __init__(self, args, run):
         self.run = run # wnadb
+
         # Set device and initialize model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
-        ## loading eeg embedding extraction model(using hooks)
-        deformer_config = load_config("configs/config-deformer.yaml")# load eeg deformer config
-        eeg_model = DLModel(deformer_config)
+        # Loading Deformer
+        self.deformer = load_deformer()
 
-        # Load checkpoint using torch.load()
-        checkpoint_path = "epoch=408-step=70348.ckpt"
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+        #Loading VQGAN
+        self.vqgan = load_vqgan(args)
 
-        # Load only the model weights
-        eeg_model.net.load_state_dict(checkpoint['state_dict'], strict=False)
-        print("✅ Model checkpoint loaded successfully!")
+        self.self.vqgan.eval()
 
-        # Move model to CUDA if available
-        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # self.eeg_model.to(device)
-
-        vqgan = self.load_vqgan(args)
-
-        self.model = VQGANTransformer(args, eeg_model, vqgan)
+        self.model = VQGANTransformer(args, self.deformer, self.vqgan)
 
         #Optimizer, AMP scaler, and scheduler
         self.optim = self.configure_optimizers(args)

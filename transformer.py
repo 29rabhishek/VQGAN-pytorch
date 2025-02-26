@@ -12,12 +12,10 @@ class VQGANTransformer(nn.Module):
 
         self.sos_token = args.sos_token
 
-        self.vqgan = vqgan
-
         #add logic to load the model to generate eeg embeddings
         self.eeg_model = eeg_model
         self.eeg_model.register_latent_hook()
-
+        self.vqgan = vqgan
 
         transformer_config = {
             "vocab_size": args.num_codebook_vectors,
@@ -30,14 +28,6 @@ class VQGANTransformer(nn.Module):
         self.transformer = GPT(**transformer_config)
 
         self.pkeep = args.pkeep
-
-    @staticmethod
-    def load_vqgan(args):
-        model = VQGAN(args)
-        
-        model.load_checkpoint(args.checkpoint_path)
-        model = model.eval()
-        return model
 
     @torch.no_grad()
     def encode_to_z(self, x):
