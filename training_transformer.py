@@ -164,4 +164,4 @@ if __name__ == '__main__':
     try:
         train_transformer = TrainTransformer(args, run)
     except Exception as e:
-        wandb.log({"error_msg"})
+        wandb.log({"error_msg", e})
