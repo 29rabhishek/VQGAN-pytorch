@@ -77,7 +77,7 @@ class VQGANTransformer(nn.Module):
         _, indices = self.encode_to_z(x)#[bs, 256]
 
         sos_tokens = torch.ones(x.shape[0], 1) * self.sos_token
-        sos_tokens = sos_tokens.long().to("cuda")
+        sos_tokens = sos_tokens.long().to(indices.device)
 
         mask = torch.bernoulli(self.pkeep * torch.ones(indices.shape, device=indices.device))
         mask = mask.round().to(dtype=torch.int64)
@@ -97,6 +97,9 @@ class VQGANTransformer(nn.Module):
         out = logits.clone()
         out[out < v[..., [-1]]] = -float("inf")
         return out
+    
+    def get_device(self):
+        return next(self.parameters()).device
 
     @torch.no_grad()
     def sample(self, x, c, eeg, steps, temperature=1.0, top_k=100):
@@ -126,7 +129,7 @@ class VQGANTransformer(nn.Module):
 
         _, indices = self.encode_to_z(x)
         sos_tokens = torch.ones(x.shape[0], 1) * self.sos_token
-        sos_tokens = sos_tokens.long().to("cuda")
+        sos_tokens = sos_tokens.long().to(self.get_device())
 
         start_indices = indices[:, :indices.shape[1] // 2]
         sample_indices = self.sample(start_indices, sos_tokens, eeg, steps=indices.shape[1] - start_indices.shape[1])
