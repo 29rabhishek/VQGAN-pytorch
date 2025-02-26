@@ -8,11 +8,12 @@ from collections import OrderedDict
 class VQGAN(nn.Module):
     def __init__(self, args):
         super(VQGAN, self).__init__()
-        self.encoder = Encoder(args).to(device=args.device)
-        self.decoder = Decoder(args).to(device=args.device)
-        self.codebook = Codebook(args).to(device=args.device)
-        self.quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
-        self.post_quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
+        self.encoder = Encoder(args)
+        self.decoder = Decoder(args)
+        # self.codebook = Codebook(args).to(device=args.device)
+        self.codebook = Codebook(args)
+        self.quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1)
+        self.post_quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1)
 
     def forward(self, imgs):
         encoded_images = self.encoder(imgs)
