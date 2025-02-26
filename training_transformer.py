@@ -5,10 +5,12 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.cuda.amp import GradScaler, autocast
 from torchvision import utils as vutils
 from transformer import VQGANTransformer
 from utils import load_transformer_data, plot_images
+from hook_deformer_model import DLModel, load_config
+from models import VQGAN
+
 import wandb
 
 class TrainTransformer:
@@ -16,9 +18,28 @@ class TrainTransformer:
         self.run = run # wnadb
         # Set device and initialize model
         self.device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-        self.model = VQGANTransformer(args)
 
-         #Optimizer, AMP scaler, and scheduler
+        ## loading eeg embedding extraction model(using hooks)
+        deformer_config = load_config("configs/config-deformer.yaml")# load eeg deformer config
+        eeg_model = DLModel(deformer_config)
+
+        # Load checkpoint using torch.load()
+        checkpoint_path = "epoch=408-step=70348.ckpt"
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+
+        # Load only the model weights
+        eeg_model.net.load_state_dict(checkpoint['state_dict'], strict=False)
+        print("✅ Model checkpoint loaded successfully!")
+
+        # Move model to CUDA if available
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.eeg_model.to(device)
+
+        vqgan = self.load_vqgan(args)
+
+        self.model = VQGANTransformer(args, eeg_model, vqgan)
+
+        #Optimizer, AMP scaler, and scheduler
         self.optim = self.configure_optimizers(args)
         self.scaler = torch.amp.GradScaler("cuda")
         self.scheduler = self.configure_scheduler(args)
@@ -29,9 +50,6 @@ class TrainTransformer:
             self.model = nn.DataParallel(self.model).to(self.device)
         else:
             self.model = self.model.to(self.device)
-
-
-
         # Start training
         self.train(args)
 

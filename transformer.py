@@ -4,34 +4,20 @@ import torch.nn.functional as F
 # from models import GPT
 from models import GPT2 as GPT ##GPT with cross attentation
 from models import VQGAN
-from hook_deformer_model import DLModel, load_config
+
 
 class VQGANTransformer(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, eeg_model, vqgan):
         super(VQGANTransformer, self).__init__()
 
         self.sos_token = args.sos_token
 
-        self.vqgan = self.load_vqgan(args)
+        self.vqgan = vqgan
+
         #add logic to load the model to generate eeg embeddings
-
-        ## loading eeg embedding extraction model(using hooks)
-        deformer_config = load_config("configs/config-deformer.yaml")# load eeg deformer config
-        self.eeg_model = DLModel(deformer_config)
-        # Load checkpoint using torch.load()
-        checkpoint_path = "epoch=408-step=70348.ckpt"
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")
-
-        # Load only the model weights
-        self.eeg_model.net.load_state_dict(checkpoint['state_dict'], strict=False)
-        print("✅ Model checkpoint loaded successfully!")
-
-        # Move model to CUDA if available
-        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # self.eeg_model.to(device)
-
-        # Register hook manually (just in case)
+        self.eeg_model = eeg_model
         self.eeg_model.register_latent_hook()
+
 
         transformer_config = {
             "vocab_size": args.num_codebook_vectors,
