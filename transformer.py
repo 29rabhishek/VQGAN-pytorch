@@ -20,15 +20,15 @@ class VQGANTransformer(nn.Module):
         self.eeg_model = DLModel(deformer_config)
         # Load checkpoint using torch.load()
         checkpoint_path = "epoch=408-step=70348.ckpt"
-        checkpoint = torch.load(checkpoint_path, map_location="cuda")
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")
 
         # Load only the model weights
         self.eeg_model.net.load_state_dict(checkpoint['state_dict'], strict=False)
         print("✅ Model checkpoint loaded successfully!")
 
         # Move model to CUDA if available
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.eeg_model.to(device)
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.eeg_model.to(device)
 
         # Register hook manually (just in case)
         self.eeg_model.register_latent_hook()

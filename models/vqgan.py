@@ -57,7 +57,7 @@ class VQGAN(nn.Module):
 
     def load_checkpoint(self, path):
         # Load the state_dict from the checkpoint
-        state_dict = torch.load(path)
+        state_dict = torch.load(path, map_location="cpu")
 
         # Check if the model was saved with DataParallel (module. prefix)
         new_state_dict = OrderedDict()
