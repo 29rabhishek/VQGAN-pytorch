@@ -157,7 +157,8 @@ class GPT(nn.Module):
         assert t <= self.block_size, "Cannot forward, model block size is exhausted."
         position_embeddings = self.pos_emb[:, :t, :]
         x = self.drop(token_embeddings + position_embeddings)
-
+        print(f"context Device: {context.device}")
+        print(f"model device: {t.device}")
         for block in self.blocks:
             x = block(x, context)
 
